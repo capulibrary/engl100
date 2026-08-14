@@ -888,6 +888,9 @@ H5P.Question = (function ($, EventDispatcher, JoubelUI) {
      * @param {string} [options.alt] Text representation
      * @param {string} [options.title] Hover text
      * @param {Boolean} [options.disableImageZooming] Set as true to disable image zooming
+     * @param {string} [options.expandImage] Localization strings
+     * @param {string} [options.minimizeImage] Localization string
+
      */
     self.setImage = function (path, options) {
       options = options ? options : {};
@@ -963,6 +966,14 @@ H5P.Question = (function ($, EventDispatcher, JoubelUI) {
         return;
       }
 
+      const setAriaLabel = () => {
+        const ariaLabel = $imgWrap.attr('aria-expanded') === 'true'
+          ? options.minimizeImage 
+          : options.expandImage;
+          
+          $imgWrap.attr('aria-label', `${ariaLabel} ${options.alt}`);
+        };
+
       var sizeDetermined = false;
       var determineSize = function () {
         if (sizeDetermined || !$img.is(':visible')) {
@@ -976,13 +987,18 @@ H5P.Question = (function ($, EventDispatcher, JoubelUI) {
           .on('click', function (event) {
             if (event.which === 1) {
               scaleImage.apply(this); // Left mouse button click
+              setAriaLabel();
             }
           }).on('keypress', function (event) {
             if (event.which === 32) {
               event.preventDefault(); // Prevent default behaviour; page scroll down
               scaleImage.apply(this); // Space bar pressed
+              setAriaLabel();
             }
           });
+
+        setAriaLabel();
+
         sections.image.$element.removeClass('h5p-question-image-fill-width');
 
         sizeDetermined  = true; // Prevent any futher events
@@ -1448,7 +1464,14 @@ H5P.Question = (function ($, EventDispatcher, JoubelUI) {
 
       // Determine parent element
       if (options.$parentElement) {
-        confirmationDialog.appendTo(options.$parentElement.get(0));
+        const parentElement = options.$parentElement.get(0);
+        let dialogParent;
+        // If using h5p-content, dialog will not appear on embedded fullscreen
+        if (parentElement.classList.contains('h5p-content')) {
+          dialogParent = parentElement.querySelector('.h5p-container');
+        }
+
+        confirmationDialog.appendTo(dialogParent ?? parentElement);
       }
       else {
 

@@ -270,7 +270,7 @@
           return getText(libraryField.metadata ? libraryField.metadata.title : libraryField.params.metadata.title);
         }
         else {
-          if (libraryField.$select !== undefined) {
+          if (libraryField.$select !== undefined && libraryField.$select.children(':selected').text() !== '-') {
             return libraryField.$select.children(':selected').text();
           }
           else {
@@ -397,7 +397,7 @@
      */
     const closeForm = function () {
       const activeManager = formTargets.pop();
-
+      
       // Close any open CKEditors
       if (H5PEditor.Html) {
         H5PEditor.Html.removeWysiwyg();

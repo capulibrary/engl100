@@ -16,11 +16,11 @@ H5P.VideoYouTube = (function ($) {
     var playbackRate = 1;
     var id = 'h5p-youtube-' + numInstances;
     numInstances++;
-
+    var ratio = 9/16;
     var $wrapper = $('<div/>');
-    var $placeholder = $('<div/>', {
-      id: id,
-      text: l10n.loading
+    var $placeholder = $('<div />', {
+      text: l10n.loading,
+      html: `<div style="position: relative; padding: ${ratio*100}% 0 0 0;"><div id="${id}"></div></div>`
     }).appendTo($wrapper);
 
     // Optional placeholder
@@ -71,13 +71,21 @@ H5P.VideoYouTube = (function ($) {
           showinfo: 0,
           iv_load_policy: 3,
           wmode: "opaque",
-          start: options.startAt,
+          start: Math.floor(options.startAt),
           playsinline: 1
         },
         events: {
           onReady: function () {
             self.trigger('ready');
             self.trigger('loaded');
+
+            if (!options.autoplay) {
+              self.toPause = true;
+            }
+            
+            if (options.deactivateSound) {
+              self.mute();
+            }
           },
           onApiChange: function () {
             if (loadCaptionsModule) {
@@ -107,6 +115,15 @@ H5P.VideoYouTube = (function ($) {
           },
           onStateChange: function (state) {
             if (state.data > -1 && state.data < 4) {
+              if (self.toPause) {
+                // if video buffering, was likely paused already - skip
+                if (state.data === H5P.Video.BUFFERING) {
+                  delete self.toPause;
+                }
+                else {
+                  self.pause();
+                }
+              }
 
               // Fix for keeping playback rate in IE11
               if (H5P.Video.IE11_PLAYBACK_RATE_FIX && state.data === H5P.Video.PLAYING && playbackRate !== 1) {
@@ -149,6 +166,7 @@ H5P.VideoYouTube = (function ($) {
           }
         }
       });
+      player.g.style = "position:absolute;top:0;left:0;width:100%;height:100%;";
     };
 
     /**
@@ -258,6 +276,7 @@ H5P.VideoYouTube = (function ($) {
      * @public
      */
     self.pause = function () {
+      delete self.toPause;
       self.off('ready', self.play);
       if (!player || !player.pauseVideo) {
         return;
@@ -279,6 +298,26 @@ H5P.VideoYouTube = (function ($) {
       player.seekTo(time, true);
     };
 
+    /**
+     * Recreate player with initial time
+     *
+     * @public
+     * @param {Number} time
+     */
+    self.resetPlayback = function (time) {
+      options.startAt = time;
+
+      if (player) {
+        if (player.getPlayerState() === H5P.Video.PLAYING) {
+          player.pauseVideo();
+          self.trigger('stateChange', H5P.Video.PAUSED);
+        }
+        player.destroy();
+        player = undefined;
+      }
+
+      create();
+    }
     /**
      * Get elapsed time since video beginning.
      *
@@ -359,6 +398,20 @@ H5P.VideoYouTube = (function ($) {
       }
 
       return player.isMuted();
+    };
+
+    /**
+     * Check if video is loaded and ready to play.
+     *
+     * @public
+     * @returns {Boolean}
+     */
+    self.isLoaded = function () {
+      if (!player || !player.getPlayerState) {
+        return;
+      }
+
+      return player.getPlayerState() === 5;
     };
 
     /**
@@ -472,7 +525,7 @@ H5P.VideoYouTube = (function ($) {
       // Use as much space as possible
       $wrapper.css({
         width: '100%',
-        height: '100%'
+        height: 'auto'
       });
 
       var width = $wrapper[0].clientWidth;

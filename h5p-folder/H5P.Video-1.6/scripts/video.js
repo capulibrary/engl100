@@ -11,10 +11,14 @@ H5P.Video = (function ($, ContentCopyrights, MediaCopyright, handlers) {
    * @param {Object} parameters.a11y Accessibility options
    * @param {Boolean} [parameters.startAt] Start time of video
    * @param {Number} id Content identifier
+   * @param {Object} [extras] Extra parameters.
    */
-  function Video(parameters, id) {
+  function Video(parameters, id, extras = {}) {
     var self = this;
+    self.oldTime = extras.previousState?.time;
     self.contentId = id;
+    self.WAS_RESET = false;
+    self.startAt = parameters.startAt || 0;
 
     // Ref youtube.js - ipad & youtube - issue
     self.pressToPlay = false;
@@ -49,9 +53,9 @@ H5P.Video = (function ($, ContentCopyrights, MediaCopyright, handlers) {
 
     parameters.a11y = parameters.a11y || [];
     parameters.playback = parameters.playback || {};
-    parameters.visuals = $.extend(true, parameters.visuals, {
-      disableFullscreen: false
-    });
+    parameters.visuals = $.extend(
+      true, { disableFullscreen: false }, parameters.visuals
+    );
 
     /** @private */
     var sources = [];
@@ -88,7 +92,7 @@ H5P.Video = (function ($, ContentCopyrights, MediaCopyright, handlers) {
     const handleAutoPlayPause = function ($container) {
       // Keep the current state
       let state;
-      self.on('stateChange', function(event) {
+      self.on('stateChange', function(event) {
         state = event.data;
       });
 
@@ -108,7 +112,7 @@ H5P.Video = (function ($, ContentCopyrights, MediaCopyright, handlers) {
             self.play();
           }
         }
-        else if (state !== Video.PAUSED) {
+        else if (state !== Video.PAUSED && state !== Video.ENDED) {
           self.autoPaused = true;
           self.pause();
         }
@@ -154,23 +158,78 @@ H5P.Video = (function ($, ContentCopyrights, MediaCopyright, handlers) {
       return handlerName;
     };
 
+    /**
+    * @public
+    * Get current state for resume support.
+    *
+    * @returns {object} Current state.
+    */
+    self.getCurrentState = function () {
+      if (self.getCurrentTime) {
+        return {
+          time: self.getCurrentTime() || self.oldTime,
+        };
+      }
+    };
+
+    /**
+     * The two functions below needs to be defined in this base class,
+     * since it is used in this class even if no handler was found.
+     */
+    self.seek = () => {};
+    self.pause = () => {};
+
+    /**
+    * @public
+    * Reset current state (time).
+    *
+    */
+    self.resetTask = function () {
+      delete self.oldTime;
+      self.resetPlayback(parameters.startAt || 0);
+    };
+
+    /**
+     * Default implementation of resetPlayback. May be overridden by sub classes.
+     *
+     * @param {*} startAt
+     */
+    self.resetPlayback = startAt => {
+      self.seek(startAt);
+      self.pause();
+      self.WAS_RESET = true;
+    };
+
     // Resize the video when we know its aspect ratio
     self.on('loaded', function () {
       self.trigger('resize');
+
+      // reset time if wasn't done immediately
+      if (self.WAS_RESET) {
+        self.seek(parameters.startAt || 0);
+        if (!parameters.playback.autoplay) {
+          self.pause();
+        }
+        self.WAS_RESET = false;
+      }
+
     });
 
     // Find player for video sources
     if (sources.length) {
       const options = {
         controls: parameters.visuals.controls,
-        autoplay: false,
+        autoplay: parameters.playback.autoplay,
         loop: parameters.playback.loop,
         fit: parameters.visuals.fit,
         poster: parameters.visuals.poster === undefined ? undefined : parameters.visuals.poster,
-        startAt: parameters.startAt || 0,
         tracks: tracks,
         disableRemotePlayback: parameters.visuals.disableRemotePlayback === true,
-        disableFullscreen: parameters.visuals.disableFullscreen === true
+        disableFullscreen: parameters.visuals.disableFullscreen === true,
+        deactivateSound: parameters.playback.deactivateSound,
+      }
+      if (!self.WAS_RESET) {
+        options.startAt = self.oldTime !== undefined ? self.oldTime : (parameters.startAt || 0);
       }
 
       var html5Handler;
@@ -214,6 +273,7 @@ H5P.Video = (function ($, ContentCopyrights, MediaCopyright, handlers) {
    */
   Video.VIDEO_CUED = 5;
 
+
   // Used to convert between html and text, since URLs have html entities.
   var $cleaner = H5P.jQuery('<div/>');
 
@@ -228,6 +288,40 @@ H5P.Video = (function ($, ContentCopyrights, MediaCopyright, handlers) {
     this.label = label;
     this.value = value;
   };
+
+ /**
+  * Determine whether video can be autoplayed.
+  * @returns {Promise<boolean>} Whether autoplay is allowed.
+  */
+  Video.isAutoplayAllowed = async () => {
+   if (document.featurePolicy?.allowsFeature('autoplay')) {
+     return true; // Browser supports `featurePolicy` and can tell directly
+   }
+
+   const video = document.createElement('video');
+
+   /*
+    * Without a video source, the play Promise will be rejected with an error
+    * if it cannot be autoplayed, but not resolve at all if it can be
+    * autoplayed. Using a timeout to detect the latter case here.
+    */
+   const timeoutMs = 50; // If play promise rejects, then within few ms
+
+   const timeoutPromise = new Promise((resolve) => {
+     window.setTimeout(() => {
+       resolve(true); // Timeout reached, autoplay is allowed
+     }, timeoutMs);
+   });
+
+   let result;
+   try {
+     result = (await Promise.race([video.play(), timeoutPromise])) ?? true;
+   } catch (error) {
+     result = false;
+   }
+
+   return result;
+ };
 
   /** @constant {Boolean} */
   Video.IE11_PLAYBACK_RATE_FIX = (navigator.userAgent.match(/Trident.*rv[ :]*11\./) ? true : false);

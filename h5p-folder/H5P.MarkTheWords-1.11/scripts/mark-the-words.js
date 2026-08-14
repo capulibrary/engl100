@@ -232,7 +232,6 @@ H5P.MarkTheWords = (function ($, Question, Word, KeyboardNav, XapiGenerator) {
       // Add keyboard navigation to this element
       var selectableWord = new Word($(this), self.params);
       if (selectableWord.isAnswer()) {
-        self.isAnswered = true;
         self.answers += 1;
       }
       self.selectableWords.push(selectableWord);
@@ -643,7 +642,9 @@ H5P.MarkTheWords = (function ($, Question, Word, KeyboardNav, XapiGenerator) {
           this.setImage(media.params.file.path, {
             disableImageZooming: this.params.media.disableImageZooming || false,
             alt: media.params.alt,
-            title: media.params.title
+            title: media.params.title,
+            expandImage: media.params.expandImage,
+            minimizeImage: media.params.minimizeImage
           });
         }
       }

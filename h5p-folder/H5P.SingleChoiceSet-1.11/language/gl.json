@@ -59,7 +59,7 @@
       "fields": [
         {
           "label": "Continuar automaticamente",
-          "description": "Ir á seguinte pregunta automaticamente cando se selecciona unha alternativa"
+          "description": "Ir automaticamente á seguinte pregunta cando se selecciona a alternativa. Isto debe desactivarse para que o contido sexa totalmente accesible cando se utiliza un lector de pantalla."
         },
         {
           "label": "Tempo límite para respostas correctas",
@@ -112,12 +112,12 @@
           "default": "Incorrecto!"
         },
         {
-          "label": "Option should have been selected",
-          "default": "Should have been selected"
+          "label": "Deberíase ter marcado a opción",
+          "default": "Deberíase terse marcado"
         },
         {
-          "label": "Option should not have been selected",
-          "default": "Should not have been selected"
+          "label": "No se debería ter marcado a opción",
+          "default": "Non se debería ter marcado"
         },
         {
           "label": "Etiqueta para o botón \"Silenciar\", que desactiva o son de retroalimentación",

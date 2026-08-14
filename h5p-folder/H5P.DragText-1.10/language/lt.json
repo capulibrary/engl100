@@ -26,6 +26,12 @@
       }
     },
     {
+      "label": "Distractors",
+      "placeholder": "*Reikjavikas* *Helsinkis*",
+      "description": "Enter extra solutions that are wrong as distractors. Use the same asterisk (*) scheme as for the text."
+    },
+    {
+      "label": "Bendras atsiliepimas",
       "fields": [
         {
           "entity": "diapazonas",
@@ -35,7 +41,7 @@
             }
           ],
           "label": "Nustatykite tinkintus atsiliepimus bet kokiam balų intervalui",
-          "description": "Click the \"Add range\" button to add as many ranges as you need. Example: 0-20% Bad score, 21-91% Average Score, 91-100% Great Score!",
+          "description": "Spustelėkite mygtuką „Pridėti diapazoną“, kad pridėtumėte tiek diapazonų, kiek jums reikia. Pavyzdys: 0–20 % blogas balas, 21–91 % vidutinis balas, 91–100 % puikus rezultatas!",
           "field": {
             "fields": [
               {
@@ -43,17 +49,16 @@
               },
               {},
               {
-                "label": "Feedback for defined score range",
-                "placeholder": "Fill in the feedback"
+                "label": "Atsiliepimai apibrėžtam balų diapazonui",
+                "placeholder": "Užpildykite atsiliepimą"
               }
             ]
           }
         }
-      ],
-      "label": "Bendras atsiliepimas"
+      ]
     },
     {
-      "label": "Tekstas mygtukui „Tikrinti“.",
+      "label": "Mygtuko \"Tikrinti\" tekstas",
       "default": "Tikrinti"
     },
     {
@@ -89,7 +94,7 @@
       "description": "Label used for accessibility, where the Read speaker reads that this is a draggable element. Variable available: @index, @count"
     },
     {
-      "label": "Mygtuko rodyti patarimą pavadinimas",
+      "label": "Mygtuko „Rodyti patarimą“ pavadinimas",
       "default": "Rodyti patarimą",
       "description": "Label used for accessibility, where the Read speaker reads it before the tip is read out"
     },
@@ -103,7 +108,7 @@
     },
     {
       "label": "Confirmation dialog title that user wants to reset a droppable",
-      "default": "Iš naujo nustatyti metimą"
+      "default": "Atstatyti metimą"
     },
     {
       "label": "Confirmation dialog description that user wants to reset a droppable",
@@ -111,7 +116,7 @@
     },
     {
       "label": "Label used for accessibility, where the read speaker indicates that dragging is initiated",
-      "default": "Metamasis yra paimtas."
+      "default": "Metamas elementas yra paimtas."
     },
     {
       "label": "Label used for accessibility, where the read speaker indicates that dragging is canceled",
@@ -157,7 +162,7 @@
     },
     {
       "label": "Assistive technology label for \"Retry\" button",
-      "default": "Bandykite atlikti užduotį dar kartą. Iš naujo nustatyti visus atsakymus ir pradėti užduotį iš naujo."
+      "default": "Bandyti atlikti užduotį dar kartą. Iš naujo nustatyti visus atsakymus ir pradėti užduotį iš naujo."
     }
   ]
 }

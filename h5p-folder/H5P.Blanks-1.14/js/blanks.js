@@ -120,7 +120,7 @@ H5P.Blanks = (function ($, Question) {
     });
 
     // Using instructions as label for our text groups
-    this.labelId = 'h5p-blanks-instructions-' + Blanks.idCounter;
+    this.labelId = 'h5p-blanks-instructions-' + Blanks.idCounter + '-' + H5P.createUUID();
     this.content = self.createQuestions();
 
     // Check for task media
@@ -134,7 +134,9 @@ H5P.Blanks = (function ($, Question) {
           self.setImage(media.params.file.path, {
             disableImageZooming: self.params.media.disableImageZooming || false,
             alt: media.params.alt,
-            title: media.params.title
+            title: media.params.title,
+            expandImage: media.params.expandImage,
+            minimizeImage: media.params.minimizeImage
           });
         }
       }
@@ -265,7 +267,7 @@ H5P.Blanks = (function ($, Question) {
       if (clozeEnd === -1) {
         continue; // No end
       }
-      var clozeContent = question.substring(clozeStart, clozeEnd);
+      var clozeContent = question.substring(clozeStart, clozeEnd).replaceAll(/<\/?[a-z]*\d?>/ig, '');
       var replacer = '';
       if (clozeContent.length) {
         replacer = handler(self.parseSolution(clozeContent));
@@ -664,8 +666,9 @@ H5P.Blanks = (function ($, Question) {
    */
   Blanks.prototype.getxAPIDefinition = function () {
     var definition = {};
+    // The below replaceAll makes sure we don't get any unwanted XAPI_PLACEHOLDERs in the description
     definition.description = {
-      'en-US': this.params.text
+      'en-US': this.params.text.replaceAll(/_{10,}/gi, '_________')
     };
     definition.type = 'http://adlnet.gov/expapi/activities/cmi.interaction';
     definition.interactionType = 'fill-in';
@@ -674,7 +677,10 @@ H5P.Blanks = (function ($, Question) {
     let crp = '';
     // xAPI forces us to create solution patterns for all possible solution combinations
     for (var i = 0; i < this.params.questions.length; i++) {
-      var question = this.handleBlanks(this.params.questions[i], function (solution) {
+      // The below replaceAll makes sure we don't get any unwanted XAPI_PLACEHOLDERs in the questions
+      let question = this.params.questions[i].replaceAll(/_{10,}/gi, '_________');
+
+      question = this.handleBlanks(question, function (solution) {
         // Collect all solution combinations for the H5P Alternative extension
         clozeSolutions.push(solution.solutions);
 
